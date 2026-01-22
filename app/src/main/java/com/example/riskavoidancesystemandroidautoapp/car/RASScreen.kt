@@ -2,24 +2,30 @@ package com.example.riskavoidancesystemandroidautoapp.car
 
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
-import androidx.car.app.model.*
+import androidx.car.app.model.ItemList
+import androidx.car.app.model.ListTemplate
+import androidx.car.app.model.Row
 
 class RASScreen(carContext: CarContext) : Screen(carContext) {
 
-    override fun onGetTemplate(): Template {
-
-        val row = Row.Builder()
-            .setTitle("No hazards detected")
-            .addText("System standing by")
-            .build()
-
-        val pane = Pane.Builder()
-            .addRow(row)
-            .build()
-
-        return PaneTemplate.Builder(pane)
+    override fun onGetTemplate() =
+        ListTemplate.Builder()
             .setTitle("Risk Avoidance System")
-            .setHeaderAction(Action.APP_ICON)
+            .setSingleList(
+                ItemList.Builder()
+                    .addItem(
+                        Row.Builder()
+                            .setTitle("System Status")
+                            .addText("RAS Connected")
+                            .build()
+                    )
+                    .addItem(
+                        Row.Builder()
+                            .setTitle("Last Alert")
+                            .addText("No active hazards")
+                            .build()
+                    )
+                    .build()
+            )
             .build()
-    }
 }

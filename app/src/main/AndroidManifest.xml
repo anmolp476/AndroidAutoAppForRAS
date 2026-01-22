@@ -15,7 +15,8 @@
         <!-- Android Auto entry point -->
         <service
             android:name=".car.RASCarAppService"
-            android:exported="true">
+            android:exported="true"
+            android:permission="android.permission.BIND_CAR_APP_SERVICE">
             <intent-filter>
                 <action android:name="androidx.car.app.CarAppService" />
             </intent-filter>
