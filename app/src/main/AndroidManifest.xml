@@ -19,7 +19,9 @@
             android:permission="android.permission.BIND_CAR_APP_SERVICE">
             <intent-filter>
                 <action android:name="androidx.car.app.CarAppService" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+
 
             <meta-data
                 android:name="androidx.car.app.minCarApiLevel"
@@ -28,12 +30,16 @@
 
 
         <!-- MQTT Service -->
-        <service android:name="org.eclipse.paho.android.service.MqttService"/>
+        <service
+            android:name="org.eclipse.paho.android.service.MqttService"
+            android:exported="false"/>
+
 
         <!-- Android Auto metadata -->
         <meta-data
-            android:name="com.google.android.gms.car.application"
-            android:resource="@xml/automotive_app_desc"/>
+            android:name="androidx.car.app.isAutomotive"
+            android:value="false" />
+
 
     </application>
 
