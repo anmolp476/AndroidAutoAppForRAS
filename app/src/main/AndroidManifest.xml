@@ -12,23 +12,26 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Material3.DayNight">
 
+        <meta-data
+            android:name="androidx.car.app.minCarApiLevel"
+            android:value="1" />
+
         <!-- Android Auto entry point -->
         <service
-            android:name=".car.RASCarAppService"
-            android:exported="true"
-            android:permission="android.permission.BIND_CAR_APP_SERVICE">
+            android:name="com.example.riskavoidancesystemandroidautoapp.car.RASCarAppService"
+            android:exported="true">
             <intent-filter>
                 <action android:name="androidx.car.app.CarAppService" />
+                <category android:name="android.intent.category.POI" />
             </intent-filter>
-
-            <meta-data
-                android:name="androidx.car.app.minCarApiLevel"
-                android:value="1" />
         </service>
 
 
         <!-- MQTT Service -->
-        <service android:name="org.eclipse.paho.android.service.MqttService"/>
+        <service
+            android:name="org.eclipse.paho.android.service.MqttService"
+            android:exported="false"/>
+
 
         <!-- Android Auto metadata -->
         <meta-data
