@@ -12,20 +12,18 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Material3.DayNight">
 
+        <meta-data
+            android:name="androidx.car.app.minCarApiLevel"
+            android:value="1" />
+
         <!-- Android Auto entry point -->
         <service
-            android:name=".car.RASCarAppService"
-            android:exported="true"
-            android:permission="android.permission.BIND_CAR_APP_SERVICE">
+            android:name="com.example.riskavoidancesystemandroidautoapp.car.RASCarAppService"
+            android:exported="true">
             <intent-filter>
                 <action android:name="androidx.car.app.CarAppService" />
-                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.POI" />
             </intent-filter>
-
-
-            <meta-data
-                android:name="androidx.car.app.minCarApiLevel"
-                android:value="1" />
         </service>
 
 
@@ -37,9 +35,8 @@
 
         <!-- Android Auto metadata -->
         <meta-data
-            android:name="androidx.car.app.isAutomotive"
-            android:value="false" />
-
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc"/>
 
     </application>
 
