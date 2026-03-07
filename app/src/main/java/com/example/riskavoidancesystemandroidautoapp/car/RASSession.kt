@@ -9,17 +9,7 @@ import com.example.riskavoidancesystemandroidautoapp.util.RASForegroundService
 
 class RASSession : Session() {
     override fun onCreateScreen(intent: Intent): Screen {
-        val sharedPref = carContext.getSharedPreferences("VehiclePrefs", Context.MODE_PRIVATE)
-        val savedMac = sharedPref.getString("CAR_ID_MAC", null)
-
-        return if (savedMac == null) {
-            CarPickerScreen(carContext)
-        } else {
-            // --- FIX: Start the Service if a car is already paired! ---
-            val serviceIntent = Intent(carContext, RASForegroundService::class.java)
-            ContextCompat.startForegroundService(carContext, serviceIntent)
-
-            RASScreen(carContext)
-        }
+        // We still get sharedPrefs, but we ignore the saved value for the initial screen
+        return CarPickerScreen(carContext)
     }
 }

@@ -75,14 +75,15 @@ class CarPickerScreen(carContext: CarContext) : Screen(carContext) {
         val sharedPref = carContext.getSharedPreferences("VehiclePrefs", Context.MODE_PRIVATE)
 
         sharedPref.edit {
+            // Clear old data first to avoid topic 'ghosting'
+            clear()
             putString("CAR_ID_MAC", macAddress)
         }
 
-        // --- FIX: Start the Foreground Service here! ---
+        // Launch the Service with the fresh MAC ID
         val serviceIntent = Intent(carContext, RASForegroundService::class.java)
-        ContextCompat.startForegroundService(carContext, serviceIntent)
+        androidx.core.content.ContextCompat.startForegroundService(carContext, serviceIntent)
 
-        // Navigate to the main Alert screen
         screenManager.push(RASScreen(carContext))
     }
 }

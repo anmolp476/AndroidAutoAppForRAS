@@ -26,7 +26,7 @@ class RASForegroundService : Service() {
         val carMacId = sharedPrefs.getString("CAR_ID_MAC", "") ?: ""
 
         if (carMacId.isNotEmpty()) {
-            // 3. Connect to HiveMQ and listen for the Pi's telemetry
+            // 3. Connect to HiveMQ and listen for the Pi's telemetr
             mqttManager.connect(carMacId) { riskData ->
                 handleIncomingRisk(riskData)
             }

@@ -52,8 +52,11 @@ class MqttManager(private val context: Context) {
     }
 
     private fun subscribeToCarTopic(carMacId: String, onMessageReceived: (RiskData) -> Unit) {
-        // The topic must match the unique ID your partner's Pi is publishing to
-        val topic = "ras/alerts/$carMacId"
+        // Force uppercase and trim to remove hidden spaces
+        val cleanMac = carMacId.uppercase().trim()
+        val topic = "ras/alerts/$cleanMac"
+
+        Log.d("RAS_MQTT", "Listening for Pi on topic: '$topic'")
 
         mqttClient?.subscribe(topic, 1) { _, message ->
             try {
