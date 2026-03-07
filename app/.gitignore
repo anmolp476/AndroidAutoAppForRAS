@@ -1,1 +1,4 @@
 /build
+**/MqttSecrets.kt
+build.gradle.kts
+

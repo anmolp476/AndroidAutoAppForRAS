@@ -34,6 +34,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -57,7 +58,7 @@ dependencies {
     implementation("androidx.car.app:app:1.7.0")
     // MQTT client for your project
     implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5")
-    implementation("org.eclipse.paho:org.eclipse.paho.android.service:1.1.1")
+    //implementation("org.eclipse.paho:org.eclipse.paho.android.service:1.1.1")
     // JSON parsing
     implementation("com.google.code.gson:gson:2.13.2")
     // Standard Android stuff (probably already there)

@@ -8,7 +8,7 @@ class MqttManager(private val context: Context) {
     private var mqttClient: MqttAsyncClient? = null
 
     fun connect(carMacId: String, onMessageReceived: (RiskData) -> Unit) {
-        val serverUri = "ssl://your-hivemq-cluster-url:8883" // Use your cluster URL
+        val serverUri = "" // Use your cluster URL
         val clientId = "AndroidAuto_$carMacId" // Unique ID for the broker
 
         mqttClient = MqttAsyncClient(serverUri, clientId, null)
