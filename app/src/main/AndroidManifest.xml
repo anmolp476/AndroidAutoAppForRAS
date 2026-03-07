@@ -4,9 +4,15 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
+
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="true"
@@ -19,7 +25,6 @@
             android:name="androidx.car.app.minCarApiLevel"
             android:value="1" />
 
-        <!-- Android Auto entry point -->
         <service
             android:name="com.example.riskavoidancesystemandroidautoapp.car.RASCarAppService"
             android:exported="true">
@@ -29,18 +34,15 @@
             </intent-filter>
         </service>
 
-
-        <!-- MQTT Service -->
         <service
-            android:name="org.eclipse.paho.android.service.MqttService"
-            android:exported="false"/>
+            android:name=".util.RASForegroundService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
 
-
-        <!-- Android Auto metadata -->
         <meta-data
             android:name="com.google.android.gms.car.application"
             android:resource="@xml/automotive_app_desc"/>
 
     </application>
-
 </manifest>

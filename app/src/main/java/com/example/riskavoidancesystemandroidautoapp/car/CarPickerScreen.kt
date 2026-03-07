@@ -3,6 +3,7 @@ package com.example.riskavoidancesystemandroidautoapp.car
 import android.Manifest
 import android.bluetooth.BluetoothManager
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.car.app.CarContext
@@ -10,6 +11,7 @@ import androidx.car.app.Screen
 import androidx.car.app.model.*
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
+import com.example.riskavoidancesystemandroidautoapp.util.RASForegroundService
 
 class CarPickerScreen(carContext: CarContext) : Screen(carContext) {
 
@@ -72,12 +74,16 @@ class CarPickerScreen(carContext: CarContext) : Screen(carContext) {
     private fun saveCarId(macAddress: String) {
         val sharedPref = carContext.getSharedPreferences("VehiclePrefs", Context.MODE_PRIVATE)
 
-        // Using the KTX extension as Panda 2 suggested
         sharedPref.edit {
+            // Clear old data first to avoid topic 'ghosting'
+            clear()
             putString("CAR_ID_MAC", macAddress)
         }
 
-        // Navigate to the main Alert screen
+        // Launch the Service with the fresh MAC ID
+        val serviceIntent = Intent(carContext, RASForegroundService::class.java)
+        androidx.core.content.ContextCompat.startForegroundService(carContext, serviceIntent)
+
         screenManager.push(RASScreen(carContext))
     }
 }
