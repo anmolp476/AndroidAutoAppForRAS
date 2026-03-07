@@ -50,7 +50,11 @@ class RASScreen(carContext: CarContext) : Screen(carContext) {
             "Front" -> R.drawable.arrow_front
             "Right" -> R.drawable.arrow_right
             "Left" -> R.drawable.arrow_left
-            // ... add others as needed
+            "Back" -> R.drawable.arrow_back
+            "Back-Left" -> R.drawable.arrow_backleft
+            "Back-Right" -> R.drawable.arrow_backright
+            "Front-Right" -> R.drawable.arrow_frontright
+            "Front-Left" -> R.drawable.arrow_frontleft
             else -> R.drawable.arrow_front
         }
 

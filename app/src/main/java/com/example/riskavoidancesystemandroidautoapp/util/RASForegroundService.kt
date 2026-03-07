@@ -26,7 +26,7 @@ class RASForegroundService : Service() {
         val carMacId = sharedPrefs.getString("CAR_ID_MAC", "") ?: ""
 
         if (carMacId.isNotEmpty()) {
-            // 3. Connect to HiveMQ and listen for the Pi's telemetr
+            // 3. Connect to HiveMQ and listen for the Pi's telemetry
             mqttManager.connect(carMacId) { riskData ->
                 handleIncomingRisk(riskData)
             }
@@ -39,9 +39,9 @@ class RASForegroundService : Service() {
         val intent = Intent("com.example.RAS_UPDATE").apply {
             putExtra("risk", data.risk)
             putExtra("behaviour", data.catBehaviour)
-            // You can add logic here to determine direction based on Pi's coordinates if needed
-            putExtra("direction", "Front")
-            setPackage(packageName) // Security requirement for Android 16
+            // Pass the actual direction sent from the Pi
+            putExtra("direction", data.direction ?: "Front")
+            setPackage(packageName)
         }
         sendBroadcast(intent)
     }

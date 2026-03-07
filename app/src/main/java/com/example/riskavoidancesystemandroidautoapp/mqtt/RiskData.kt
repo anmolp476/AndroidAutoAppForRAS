@@ -8,6 +8,7 @@ package com.example.riskavoidancesystemandroidautoapp.mqtt
 data class RiskData(
     val risk: String,             // e.g., "high"
     val catBehaviour: String,     // e.g., "driver distracted..."
+    val direction: String?,
     val lat: Double,
     val long: Double,
     val meshId: Int,
