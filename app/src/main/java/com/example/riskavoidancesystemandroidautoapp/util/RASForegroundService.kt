@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.IBinder
 import android.util.Log
 import androidx.core.content.ContextCompat
+import com.example.riskavoidancesystemandroidautoapp.mqtt.InfoPacket
 import com.example.riskavoidancesystemandroidautoapp.mqtt.MqttManager
 import com.example.riskavoidancesystemandroidautoapp.mqtt.RiskData
 
@@ -17,22 +18,27 @@ class RASForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // 1. Create the notification so Android doesn't kill the process
         val notification = NotificationHelper.createNotification(this)
         startForeground(1, notification)
 
-        // 2. Get your saved Car MAC ID from Step 1
-        val sharedPrefs = getSharedPreferences("VehiclePrefs", MODE_PRIVATE)
-        val carMacId = sharedPrefs.getString("CAR_ID_MAC", "") ?: ""
+        val carMacId = intent?.getStringExtra("MAC_ID") ?: return START_STICKY
 
-        if (carMacId.isNotEmpty()) {
-            // 3. Connect to HiveMQ and listen for the Pi's telemetry
-            mqttManager.connect(carMacId) { riskData ->
-                handleIncomingRisk(riskData)
-            }
+        // Assemble the configuration payload from the Intent
+        val infoPacket = InfoPacket(
+            payloadType = "INFO",
+            ssid = intent.getStringExtra("SSID") ?: "",
+            pass = intent.getStringExtra("PASS") ?: "",
+            vehicleMake = intent.getStringExtra("MAKE") ?: "",
+            vehicleModel = intent.getStringExtra("MODEL") ?: "",
+            vehicleYear = intent.getStringExtra("YEAR") ?: ""
+        )
+
+        // Initiate the master connection sequence
+        mqttManager.connect(carMacId, infoPacket) { riskData ->
+            handleIncomingRisk(riskData)
         }
 
-        return START_STICKY // Tells Android to restart the service if it's killed
+        return START_STICKY
     }
 
     private fun handleIncomingRisk(data: RiskData) {

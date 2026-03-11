@@ -11,6 +11,7 @@ import androidx.car.app.Screen
 import androidx.car.app.model.*
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
+import com.example.riskavoidancesystemandroidautoapp.ui.VehicleSetupScreen
 import com.example.riskavoidancesystemandroidautoapp.util.RASForegroundService
 
 class CarPickerScreen(carContext: CarContext) : Screen(carContext) {
@@ -80,10 +81,6 @@ class CarPickerScreen(carContext: CarContext) : Screen(carContext) {
             putString("CAR_ID_MAC", macAddress)
         }
 
-        // Launch the Service with the fresh MAC ID
-        val serviceIntent = Intent(carContext, RASForegroundService::class.java)
-        androidx.core.content.ContextCompat.startForegroundService(carContext, serviceIntent)
-
-        screenManager.push(RASScreen(carContext))
+        screenManager.push(VehicleSetupScreen(carContext, macAddress))
     }
 }
