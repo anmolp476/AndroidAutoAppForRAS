@@ -42,14 +42,22 @@ class RASForegroundService : Service() {
     }
 
     private fun handleIncomingRisk(data: RiskData) {
+        // 1. Send the data to the Android Auto Dashboard
         val intent = Intent("com.example.RAS_UPDATE").apply {
             putExtra("risk", data.risk)
             putExtra("behaviour", data.catBehaviour)
-            // Pass the actual direction sent from the Pi
             putExtra("direction", data.direction ?: "Front")
             setPackage(packageName)
         }
         sendBroadcast(intent)
+
+        // 2. Update the Phone's Notification Tray
+        NotificationHelper.pushHazardAlert(
+            context = this,
+            riskLevel = data.risk ?: "UNKNOWN",
+            behavior = data.catBehaviour ?: "Hazard",
+            direction = data.direction ?: "Front"
+        )
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
