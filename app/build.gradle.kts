@@ -64,4 +64,6 @@ dependencies {
     // Standard Android stuff (probably already there)
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("com.google.android.material:material:1.13.0")
+    implementation("ch.hsr:geohash:1.4.0")
+    implementation("com.google.android.gms:play-services-location:21.2.0")
 }
