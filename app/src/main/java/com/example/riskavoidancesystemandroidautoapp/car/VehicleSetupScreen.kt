@@ -71,7 +71,7 @@ class VehicleSetupScreen(carContext: CarContext, private val carMacId: String) :
             .setTitle("➡ SEND TO PI (Start System)")
             .setOnClickListener {
                 // Enforce that critical fields are present before execution
-                if (ssid.isNotEmpty() && pass.isNotEmpty() && make.isNotEmpty() && model.isNotEmpty()) {
+                if (ssid.isNotEmpty() || pass.isNotEmpty() || make.isNotEmpty() || model.isNotEmpty()) {
 
                     // Package the data for the background service
                     val serviceIntent = Intent(carContext, RASForegroundService::class.java).apply {
