@@ -58,7 +58,7 @@ class RASForegroundService : Service() {
 
         //polling every 5 seconds
         val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000)
-            //.setMinUpdateDistanceMeters(50f) // Keep commented out for stationary testing
+            .setMinUpdateDistanceMeters(50f) // Keep commented out for stationary testing
             .build()
 
         locationCallback = object : LocationCallback() {
