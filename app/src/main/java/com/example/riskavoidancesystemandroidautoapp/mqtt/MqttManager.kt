@@ -87,7 +87,7 @@ class MqttManager(private val context: Context) {
             Log.w("RAS_MQTT", "Network not ready. Buffering Phase 2 coordinate.")
             pendingLatitude = latitude
             pendingLongitude = longitude
-            return // CRITICAL: This stops the red error from happening.
+            return
         }
 
         val newGeohash = GeoHash.geoHashStringWithCharacterPrecision(latitude, longitude, 7)
