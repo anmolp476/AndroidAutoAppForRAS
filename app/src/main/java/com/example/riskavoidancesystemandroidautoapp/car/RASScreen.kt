@@ -6,6 +6,8 @@ import android.content.Intent
 import android.content.IntentFilter
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
+import android.os.Handler
+import android.os.Looper
 import androidx.car.app.model.*
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -18,6 +20,10 @@ class RASScreen(carContext: CarContext) : Screen(carContext) {
     private var mqttHazardType = "Scanning..."
     private var mqttDirection = "Front"
 
+    // Add a Handler to manage our timer on the main UI thread
+    private val handler = Handler(Looper.getMainLooper())
+    private var resetRunnable: Runnable? = null
+
     // 1. Define the Receiver to catch data from the Foreground Service
     private val riskReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -25,8 +31,27 @@ class RASScreen(carContext: CarContext) : Screen(carContext) {
             mqttHazardType = intent.getStringExtra("behaviour") ?: "Stable"
             mqttDirection = intent.getStringExtra("direction") ?: "Front"
 
-            // This triggers the car head unit to call onGetTemplate() again
+            // Redraw the screen immediately with the new danger info
             invalidate()
+
+            // Clear any existing countdown timers so they don't overlap
+            resetRunnable?.let { handler.removeCallbacks(it) }
+
+            // If it's a real danger alert, start the 7-second reset countdown
+            if (mqttRiskLevel != "MILD") {
+                resetRunnable = Runnable {
+                    // Reset variables back to safe defaults
+                    mqttRiskLevel = "MILD"
+                    mqttHazardType = "Scanning..."
+                    mqttDirection = "Front"
+
+                    // Redraw the screen back to normal
+                    invalidate()
+                }
+
+                // 7000 milliseconds = 7 seconds. Adjust this if you want it longer/shorter!
+                handler.postDelayed(resetRunnable!!, 10000)
+            }
         }
     }
 
