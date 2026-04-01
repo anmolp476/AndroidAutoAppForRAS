@@ -11,12 +11,15 @@ class MqttManager(private val context: Context) {
     private var mqttClient: MqttAsyncClient? = null
     private val gson = Gson()
 
-    // Spatial State Tracking (Phase 2)
+    //these 2 are for phase 2
     private var currentGeohashTopic: String? = null
     private var messageCallback: ((RiskData) -> Unit)? = null
 
-    // The Temporal Shield Anchor
     private var connectionTime: Long = 0
+
+    //these are for temporarily storing the lon/lat values at startup
+    private var pendingLatitude: Double? = null
+    private var pendingLongitude: Double? = null
 
     fun connect(carMacId: String, initialInfo: InfoPacket?, onMessageReceived: (RiskData) -> Unit) {
         if (mqttClient?.isConnected == true) {
@@ -41,24 +44,29 @@ class MqttManager(private val context: Context) {
                     Log.d("RAS_MQTT", "Successfully connected to HiveMQ cluster")
                     connectionTime = System.currentTimeMillis()
 
-                    // --- PHASE 1: THE HARDWARE HANDSHAKE ---
+                    //PHASE 1
                     val cleanMac = carMacId.uppercase().trim()
-                    //val phase1Topic = "ras/$cleanMac"
                     val phase1Topic = "incidents/reports"
 
                     Log.d("RAS_MQTT", "Phase 1: Occupying static hardware channel: $phase1Topic")
 
-                    // Subscribe to the shared Phase 1 topic
                     mqttClient?.subscribe(phase1Topic, 1) { _, message ->
                         val payload = message.payload.decodeToString()
-                        // Since we share this room with the Pi, we will see our own INFO packet echo back.
-                        // We simply log it and ignore it, preventing it from crashing the UI.
                         Log.d("RAS_MQTT", "Phase 1 Intercept: $payload")
                     }
 
-                    // Fire the INFO packet into the shared room for the Pi to catch
                     if (initialInfo != null) {
                         sendInfoPacket(phase1Topic, initialInfo)
+                    }
+
+                    //the network is finally ready, check if the GPS dropped a coordinate while we were building the bridge.
+                    if (pendingLatitude != null && pendingLongitude != null) {
+                        Log.w("RAS_MQTT", "Network online. Releasing buffered Phase 2 coordinate.")
+                        updateSpatialSubscription(pendingLatitude!!, pendingLongitude!!)
+
+                        // Empty the waiting room
+                        pendingLatitude = null
+                        pendingLongitude = null
                     }
                 }
 
@@ -71,11 +79,19 @@ class MqttManager(private val context: Context) {
         }
     }
 
-    // --- PHASE 2: THE SPATIAL TELEMETRY ---
+    //PHASE 2
     fun updateSpatialSubscription(latitude: Double, longitude: Double) {
+
+        //if the client isn't connected yet, lock the coordinate in the waiting room and return
+        if (mqttClient?.isConnected != true) {
+            Log.w("RAS_MQTT", "Network not ready. Buffering Phase 2 coordinate.")
+            pendingLatitude = latitude
+            pendingLongitude = longitude
+            return // CRITICAL: This stops the red error from happening.
+        }
+
         val newGeohash = GeoHash.geoHashStringWithCharacterPrecision(latitude, longitude, 7)
         val newTopic = "risk/geohash/7/$newGeohash"
-
 
         if (currentGeohashTopic == newTopic) return
 
@@ -87,7 +103,6 @@ class MqttManager(private val context: Context) {
         Log.d("RAS_MQTT", "Phase 2: Entering new zone. Subscribing to: $newTopic")
         try {
             mqttClient?.subscribe(newTopic, 1) { _, message ->
-                // The Temporal Shield (Defends against Phase 2 ghost alerts on startup)
                 val timeSinceConnect = System.currentTimeMillis() - connectionTime
                 if (timeSinceConnect < 3000) return@subscribe
 
