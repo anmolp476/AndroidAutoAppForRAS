@@ -11,15 +11,13 @@ class MqttManager(private val context: Context) {
     private var mqttClient: MqttAsyncClient? = null
     private val gson = Gson()
 
-    // Spatial State Tracking (Phase 2)
+    //these 2 are for phase 2
     private var currentGeohashTopic: String? = null
     private var messageCallback: ((RiskData) -> Unit)? = null
 
-    // The Temporal Shield Anchor
     private var connectionTime: Long = 0
 
-    // --- THE WAITING ROOM (NEW) ---
-    // These hold the GPS coordinates if they arrive before the network is ready
+    //these are for temporarily storing the lon/lat values at startup
     private var pendingLatitude: Double? = null
     private var pendingLongitude: Double? = null
 
@@ -46,7 +44,7 @@ class MqttManager(private val context: Context) {
                     Log.d("RAS_MQTT", "Successfully connected to HiveMQ cluster")
                     connectionTime = System.currentTimeMillis()
 
-                    // --- PHASE 1: THE HARDWARE HANDSHAKE ---
+                    //PHASE 1
                     val cleanMac = carMacId.uppercase().trim()
                     val phase1Topic = "incidents/reports"
 
@@ -61,8 +59,7 @@ class MqttManager(private val context: Context) {
                         sendInfoPacket(phase1Topic, initialInfo)
                     }
 
-                    // --- THE UNLEASH (NEW) ---
-                    // The network is finally ready. Check if the GPS dropped a coordinate while we were building the bridge.
+                    //the network is finally ready, check if the GPS dropped a coordinate while we were building the bridge.
                     if (pendingLatitude != null && pendingLongitude != null) {
                         Log.w("RAS_MQTT", "Network online. Releasing buffered Phase 2 coordinate.")
                         updateSpatialSubscription(pendingLatitude!!, pendingLongitude!!)
@@ -82,11 +79,10 @@ class MqttManager(private val context: Context) {
         }
     }
 
-    // --- PHASE 2: THE SPATIAL TELEMETRY ---
+    //PHASE 2
     fun updateSpatialSubscription(latitude: Double, longitude: Double) {
 
-        // --- THE TRAP (NEW) ---
-        // If the client isn't connected yet, lock the coordinate in the waiting room and ABORT.
+        //if the client isn't connected yet, lock the coordinate in the waiting room and return
         if (mqttClient?.isConnected != true) {
             Log.w("RAS_MQTT", "Network not ready. Buffering Phase 2 coordinate.")
             pendingLatitude = latitude
