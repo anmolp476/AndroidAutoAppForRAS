@@ -46,7 +46,7 @@ class MqttManager(private val context: Context) {
 
                     //PHASE 1
                     val cleanMac = carMacId.uppercase().trim()
-                    val phase1Topic = "incidents/reports"
+                    val phase1Topic = "info/$cleanMac"
 
                     Log.d("RAS_MQTT", "Phase 1: Occupying static hardware channel: $phase1Topic")
 
