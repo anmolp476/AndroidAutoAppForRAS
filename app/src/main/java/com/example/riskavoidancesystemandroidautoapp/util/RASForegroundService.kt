@@ -85,24 +85,25 @@ class RASForegroundService : Service() {
     }
 
     private fun handleIncomingRisk(data: RiskData) {
-        // Intercept the raw coordinates and calculate the relative direction locally
-        val calculatedDirection = calculateRelativeDirection(data.lat, data.long)
+        val calculatedDirection = calculateRelativeDirection(data.lat, data.lon)
 
         val intent = Intent("com.example.RAS_UPDATE").apply {
             putExtra("risk", data.risk)
-            putExtra("behaviour", data.catBehaviour)
+            // Pass the behaviors list as an ArrayList of Strings
+            putStringArrayListExtra("behaviours", ArrayList(data.catBehaviours))
             putExtra("direction", calculatedDirection)
             setPackage(packageName)
         }
         sendBroadcast(intent)
 
-        Log.d("RAS_ForegroundService", "riskLevel: ${data.risk} behaviour: ${data.catBehaviour} direction: $calculatedDirection")
+        val combinedBehaviours = data.catBehaviours.joinToString(", ").uppercase()
+        Log.d("RAS_ForegroundService", "riskLevel: ${data.risk} behaviour: $combinedBehaviours direction: $calculatedDirection")
 
         NotificationHelper.pushHazardAlert(
             context = this,
-            riskLevel = data.risk ?: "UNKNOWN",
-            behavior = data.catBehaviour ?: "Hazard",
-            direction = calculatedDirection ?: "Front"
+            riskLevel = data.risk?: "UNKNOWN",
+            behavior = combinedBehaviours,
+            direction = calculatedDirection?: "Front"
         )
     }
 

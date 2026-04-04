@@ -14,52 +14,41 @@ import androidx.core.graphics.drawable.IconCompat
 import com.example.riskavoidancesystemandroidautoapp.R
 import androidx.core.content.edit
 
-// 1. Create a data class to hold the state of EACH individual alert
 data class HazardAlert(
     val risk: String,
-    val hazard: String,
+    val behaviourList: List<String>,
     val direction: String,
     val runnable: Runnable
 )
 
 class RASScreen(carContext: CarContext) : Screen(carContext) {
 
-    // 2. Replace the single variables with a MutableList to track multiple alerts
     private val activeAlerts = mutableListOf<HazardAlert>()
     private val handler = Handler(Looper.getMainLooper())
 
     private val riskReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            val riskLevel = intent.getStringExtra("risk")?.uppercase() ?: "MILD"
-            val hazardType = intent.getStringExtra("behaviour") ?: "Stable"
-            val direction = intent.getStringExtra("direction") ?: "Front"
+            val riskLevel = intent.getStringExtra("risk")?.uppercase()?: "MILD"
+            val behaviourList = intent.getStringArrayListExtra("behaviours")?: arrayListOf("STABLE")
+            val direction = intent.getStringExtra("direction")?: "Front"
 
-            // Only track real dangers. MILD means no threat, so we ignore it and let the 10s timers run.
-            if (riskLevel != "MILD") {
+            if (riskLevel!= "MILD") {
                 lateinit var newAlert: HazardAlert
 
-                // The runnable that will remove THIS specific alert after 10 seconds
                 val removalRunnable = Runnable {
                     activeAlerts.remove(newAlert)
                     invalidate()
                 }
 
-                newAlert = HazardAlert(riskLevel, hazardType, direction, removalRunnable)
-
-                // Add the new alert to the TOP of the list (index 0 is always newest)
+                newAlert = HazardAlert(riskLevel, behaviourList, direction, removalRunnable)
                 activeAlerts.add(0, newAlert)
+                handler.postDelayed(removalRunnable, 10000)
 
-                // Start the 10-second timer (10000 ms) for this specific alert
-                handler.postDelayed(removalRunnable, 25000)
-
-                // 🚨 CRITICAL: Android Auto crashes if a Pane has too many rows (driver distraction rule).
-                // We cap the list at 3 active alerts. If a 4th comes in, we kill the oldest one early.
                 if (activeAlerts.size > 3) {
                     val oldest = activeAlerts.removeLast()
-                    handler.removeCallbacks(oldest.runnable) // Stop its timer so it doesn't trigger an error
+                    handler.removeCallbacks(oldest.runnable)
                 }
 
-                // Redraw the screen to show the new stack
                 invalidate()
             }
         }
@@ -70,7 +59,6 @@ class RASScreen(carContext: CarContext) : Screen(carContext) {
         ContextCompat.registerReceiver(carContext, riskReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
     }
 
-    // Helper function to keep onGetTemplate clean
     private fun getArrowResource(direction: String): Int {
         return when(direction) {
             "Front" -> R.drawable.arrow_front
@@ -89,7 +77,6 @@ class RASScreen(carContext: CarContext) : Screen(carContext) {
         val paneBuilder = Pane.Builder()
 
         if (activeAlerts.isEmpty()) {
-            // THE SAFE STATE: No active alerts in the list
             val rowBuilder = Row.Builder()
                 .setTitle("MILD RISK")
                 .addText("HAZARD: Scanning...")
@@ -100,7 +87,6 @@ class RASScreen(carContext: CarContext) : Screen(carContext) {
             paneBuilder.addRow(rowBuilder.build())
 
         } else {
-            // THE DANGER STATE: Loop through our active alerts
             activeAlerts.forEachIndexed { index, alert ->
 
                 val riskColor = when(alert.risk) {
@@ -115,16 +101,14 @@ class RASScreen(carContext: CarContext) : Screen(carContext) {
                     .build()
 
                 val rowBuilder = Row.Builder()
+                val combinedBehaviours = alert.behaviourList.joinToString(", ").uppercase()
 
                 if (index == 0) {
-                    // NEWEST ALERT (Top Row): Show full text details
                     rowBuilder.setTitle("${alert.risk} RISK")
-                        .addText("HAZARD: ${alert.hazard}")
+                        .addText("HAZARD: $combinedBehaviours")
                         .addText("DIRECTION: ${alert.direction}")
                 } else {
-                    // OLDER ALERTS (Bottom Rows): Minimal UI
-                    // Note: Android Auto requires every Row to have a Title
-                    rowBuilder.setTitle("Previous Hazard: ${alert.direction}")
+                    rowBuilder.setTitle("${alert.risk}: $combinedBehaviours - ${alert.direction}")
                 }
 
                 rowBuilder.setImage(carImage)
