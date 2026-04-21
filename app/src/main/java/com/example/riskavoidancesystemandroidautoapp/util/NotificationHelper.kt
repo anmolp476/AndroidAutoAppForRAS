@@ -7,8 +7,15 @@ import android.content.Context
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.car.app.notification.CarAppExtender
+import android.media.AudioManager
+import android.media.ToneGenerator
+import kotlin.concurrent.thread
 
 object NotificationHelper {
+
+    // Initialize the generator using the ALARM stream for high visibility
+    // The value 100 represents the system volume percentage
+    private val toneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, 100)
     private const val SERVICE_CHANNEL_ID = "ras_monitoring_channel"
     private const val ALERT_CHANNEL_ID = "ras_hazard_channel"
     private const val ANCHOR_ID = 1
@@ -64,5 +71,29 @@ object NotificationHelper {
             .build()
 
         manager.notify(uniqueAlertId, notification)
+    }
+
+    fun playSeveritySound(riskLevel: String?) {
+        thread {
+            when (riskLevel?.uppercase()) {
+                "LOW" -> {
+                    // One audible beep (Proprietary beep, 200ms)
+                    toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 200)
+                }
+                "MEDIUM" -> {
+                    // Two audible beeps
+                    // TONE_PROP_BEEP2 is a predefined general double beep
+                    toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP2, 400)
+                }
+                "HIGH", "CRITICAL" -> {
+                    // Full-on siren beeps
+                    // We simulate a siren by looping an emergency tone sequence
+                    repeat(3) {
+                        toneGenerator.startTone(ToneGenerator.TONE_CDMA_EMERGENCY_RINGBACK, 500)
+                        Thread.sleep(600) // Space out the siren bursts
+                    }
+                }
+            }
+        }
     }
 }

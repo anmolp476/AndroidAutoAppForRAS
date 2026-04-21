@@ -42,7 +42,7 @@ class RASScreen(carContext: CarContext) : Screen(carContext) {
 
                 newAlert = HazardAlert(riskLevel, behaviourList, direction, removalRunnable)
                 activeAlerts.add(0, newAlert)
-                handler.postDelayed(removalRunnable, 10000)
+                handler.postDelayed(removalRunnable, 1000)
 
                 if (activeAlerts.size > 3) {
                     val oldest = activeAlerts.removeLast()

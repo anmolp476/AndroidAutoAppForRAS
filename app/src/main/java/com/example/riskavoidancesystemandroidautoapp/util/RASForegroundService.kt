@@ -96,6 +96,8 @@ class RASForegroundService : Service() {
         }
         sendBroadcast(intent)
 
+        NotificationHelper.playSeveritySound(data.risk)
+
         val combinedBehaviours = data.catBehaviours.joinToString(", ").uppercase()
         Log.d("RAS_ForegroundService", "riskLevel: ${data.risk} behaviour: $combinedBehaviours direction: $calculatedDirection")
 
