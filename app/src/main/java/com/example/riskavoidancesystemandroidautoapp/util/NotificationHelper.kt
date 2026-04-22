@@ -4,6 +4,8 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.car.app.notification.CarAppExtender
@@ -73,25 +75,37 @@ object NotificationHelper {
         manager.notify(uniqueAlertId, notification)
     }
 
-    fun playSeveritySound(riskLevel: String?) {
+    fun playSeveritySound(context: Context, riskLevel: String?) {
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+
+        // Setup attributes to tell the car this is a safety alert
+        val playbackAttributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+
+        // Request Transient Focus to "duck" the music while the siren plays
+        val focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+            .setAudioAttributes(playbackAttributes)
+            .build()
+
         thread {
-            when (riskLevel?.uppercase()) {
-                "LOW" -> {
-                    // One audible beep (Proprietary beep, 200ms)
-                    toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 200)
-                }
-                "MEDIUM" -> {
-                    // Two audible beeps
-                    // TONE_PROP_BEEP2 is a predefined general double beep
-                    toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP2, 400)
-                }
-                "HIGH", "CRITICAL" -> {
-                    // Full-on siren beeps
-                    // We simulate a siren by looping an emergency tone sequence
-                    repeat(3) {
-                        toneGenerator.startTone(ToneGenerator.TONE_CDMA_EMERGENCY_RINGBACK, 500)
-                        Thread.sleep(600) // Space out the siren bursts
+            val result = audioManager.requestAudioFocus(focusRequest)
+            if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                try {
+                    when (riskLevel?.uppercase()) {
+                        "LOW" -> toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 200)
+                        "MEDIUM" -> toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP2, 400)
+                        "HIGH", "CRITICAL" -> {
+                            // Siren sequence: 3 emergency pulses
+                            repeat(3) {
+                                toneGenerator.startTone(ToneGenerator.TONE_CDMA_EMERGENCY_RINGBACK, 500)
+                                Thread.sleep(600)
+                            }
+                        }
                     }
+                } finally {
+                    audioManager.abandonAudioFocusRequest(focusRequest)
                 }
             }
         }
