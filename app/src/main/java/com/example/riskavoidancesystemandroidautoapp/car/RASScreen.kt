@@ -18,7 +18,6 @@ data class HazardAlert(
     val risk: String,
     val behaviourList: List<String>,
     val direction: String,
-    val vehicleDetails: String, // 🚨 Added this field
     val runnable: Runnable
 )
 
@@ -32,34 +31,24 @@ class RASScreen(carContext: CarContext) : Screen(carContext) {
             val riskLevel = intent.getStringExtra("risk")?.uppercase()?: "MILD"
             val behaviourList = intent.getStringArrayListExtra("behaviours")?: arrayListOf("STABLE")
             val direction = intent.getStringExtra("direction")?: "Front"
-            val carInfo = "${intent.getStringExtra("color")?: ""} ${intent.getStringExtra("make")?: ""} ${intent.getStringExtra("model")?: ""}".trim()
 
             if (riskLevel!= "MILD") {
-                // 🚨 FIX FOR STUCK ARROW: Find the car by its details
-                val existing = activeAlerts.find { it.vehicleDetails == carInfo }
+                lateinit var newAlert: HazardAlert
 
-                if (existing!= null) {
-                    // If car is already showing, swap it with the new direction data
-                    activeAlerts.remove(existing)
-                    handler.removeCallbacks(existing.runnable)
-
-                    val updated = HazardAlert(riskLevel, behaviourList, direction, carInfo, existing.runnable)
-                    activeAlerts.add(0, updated)
-                    handler.postDelayed(updated.runnable, 10000)
-
-                    // Triggers redraw to physically move the arrow
+                val removalRunnable = Runnable {
+                    activeAlerts.remove(newAlert)
                     invalidate()
-                    return
                 }
 
-                // Normal logic for brand new hazards
-                lateinit var newAlert: HazardAlert
-                val removalRunnable = Runnable { activeAlerts.remove(newAlert); invalidate() }
-                newAlert = HazardAlert(riskLevel, behaviourList, direction, carInfo, removalRunnable)
+                newAlert = HazardAlert(riskLevel, behaviourList, direction, removalRunnable)
                 activeAlerts.add(0, newAlert)
                 handler.postDelayed(removalRunnable, 10000)
 
-                if (activeAlerts.size > 2) { activeAlerts.removeLast() }
+                if (activeAlerts.size > 3) {
+                    val oldest = activeAlerts.removeLast()
+                    handler.removeCallbacks(oldest.runnable)
+                }
+
                 invalidate()
             }
         }
@@ -111,36 +100,19 @@ class RASScreen(carContext: CarContext) : Screen(carContext) {
                     .setTint(riskColor)
                     .build()
 
-                // Inside your activeAlerts.forEachIndexed loop in onGetTemplate():
+                val rowBuilder = Row.Builder()
                 val combinedBehaviours = alert.behaviourList.joinToString(", ").uppercase()
 
-// Define the hazard row
-                val rowBuilder = Row.Builder()
-                    .setImage(CarIcon.Builder(IconCompat.createWithResource(carContext, getArrowResource(alert.direction)))
-                        .setTint(when(alert.risk) {
-                            "HIGH" -> CarColor.RED
-                            "MEDIUM" -> CarColor.YELLOW
-                            "LOW" -> CarColor.GREEN
-                            else -> CarColor.DEFAULT
-                        }).build())
-
                 if (index == 0) {
-                    // NEWEST ALERT: Uses 2 rows total to show the car details separately
                     rowBuilder.setTitle("${alert.risk} RISK")
                         .addText("HAZARD: $combinedBehaviours")
                         .addText("DIRECTION: ${alert.direction}")
-                    paneBuilder.addRow(rowBuilder.build())
-
-                    // 🚨 RESTORED CAR ROW: Adding the car details as its own dedicated row
-                    val carRow = Row.Builder()
-                        .setTitle("Car: ${alert.vehicleDetails}")
-                        .build()
-                    paneBuilder.addRow(carRow)
                 } else {
-                    // OLDER ALERTS: 1 row total to avoid the 4-row crash limit
                     rowBuilder.setTitle("${alert.risk}: $combinedBehaviours - ${alert.direction}")
-                    paneBuilder.addRow(rowBuilder.build())
                 }
+
+                rowBuilder.setImage(carImage)
+                paneBuilder.addRow(rowBuilder.build())
             }
         }
 

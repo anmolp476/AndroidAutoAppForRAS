@@ -85,26 +85,26 @@ class RASForegroundService : Service() {
     }
 
     private fun handleIncomingRisk(data: RiskData) {
-        // 🚨 MANUAL OVERRIDE: Prioritize the direction in the JSON payload if it exists
-        val finalDirection = if (!data.direction.isNullOrEmpty() && data.direction!= "Unknown") {
-            data.direction // Trusts your script's "Right", "Back", etc.
-        } else {
-            calculateRelativeDirection(data.lat, data.lon) // Fallback to real GPS math
-        }
+        val calculatedDirection = calculateRelativeDirection(data.lat, data.lon)
 
         val intent = Intent("com.example.RAS_UPDATE").apply {
             putExtra("risk", data.risk)
+            // Pass the behaviors list as an ArrayList of Strings
             putStringArrayListExtra("behaviours", ArrayList(data.catBehaviours))
-            putExtra("direction", finalDirection)
-            putExtra("make", data.vehicleMake?: "Unknown")
-            putExtra("model", data.vehicleModel?: "Car")
-            putExtra("color", data.color?: "N/A")
+            putExtra("direction", calculatedDirection)
             setPackage(packageName)
         }
         sendBroadcast(intent)
 
-        // FIXED: Now calls the two-argument function to fix your compile error
-        NotificationHelper.playSeveritySound(this, data.risk)
+        val combinedBehaviours = data.catBehaviours.joinToString(", ").uppercase()
+        Log.d("RAS_ForegroundService", "riskLevel: ${data.risk} behaviour: $combinedBehaviours direction: $calculatedDirection")
+
+        NotificationHelper.pushHazardAlert(
+            context = this,
+            riskLevel = data.risk?: "UNKNOWN",
+            behavior = combinedBehaviours,
+            direction = calculatedDirection?: "Front"
+        )
     }
 
     // The Spatial Calculation Engine
